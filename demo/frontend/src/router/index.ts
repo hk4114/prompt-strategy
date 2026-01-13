@@ -1,31 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
-import MinimalFormula from '@/views/MinimalFormula.vue'
-import TemplateList from '@/views/TemplateList.vue'
-import ComplexPrompt from '@/views/ComplexPrompt.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      name: 'Home',
+      component: () => import('@/views/Home.vue')
     },
     {
-      path: '/minimal-formula',
-      name: 'minimal-formula',
-      component: MinimalFormula
+      path: '/minimal',
+      name: 'Minimal',
+      component: () => import('@/views/Minimal.vue')
     },
     {
       path: '/templates',
-      name: 'templates',
-      component: TemplateList
+      name: 'Templates',
+      component: () => import('@/views/Templates.vue')
     },
     {
-      path: '/complex-prompt',
-      name: 'complex-prompt',
-      component: ComplexPrompt
+      path: '/complex',
+      name: 'Complex',
+      component: () => import('@/views/Complex.vue')
     }
   ]
 })

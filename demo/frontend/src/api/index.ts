@@ -1,69 +1,58 @@
-import request from './requests'
+import axios from 'axios'
 
-// Categories and Products
-export function getCategories() {
-  return request.get('/categories')
-}
+const api = axios.create({
+  baseURL: '/api',
+  timeout: 10000
+})
 
-// Templates
-export function getTemplates(params?: {
-  type?: string
-  search?: string
-  tag?: string
-}) {
-  return request.get('/templates', { params })
-}
+// 首页接口
+export const getCategories = () => api.get('/categories')
 
-export function getTemplate(id: number) {
-  return request.get(`/templates/${id}`)
-}
+// 模板接口
+export const getTemplates = (params?: { keyword?: string; type?: string }) =>
+  api.get('/templates', { params })
 
-export function createTemplate(data: {
+export const createTemplate = (data: {
   title: string
   content: string
-  template_type: string
-  tags: string[]
-}) {
-  return request.post('/templates', data)
-}
+  templateType?: string
+  tags?: string[]
+}) => api.post('/templates', data)
 
-export function incrementTemplateUsage(id: number) {
-  return request.post(`/templates/${id}/use`)
-}
+export const deleteTemplate = (id: number) => api.delete(`/templates/${id}`)
 
-export function getTemplateTags() {
-  return request.get('/templates/tags')
-}
+export const copyTemplate = (id: number) => api.post(`/templates/${id}/copy`)
 
-// Prompts
-export function generatePrompt(data: {
-  prompt_type: string
-  generated_prompt: string
-  form_data: Record<string, any>
-}) {
-  return request.post('/prompts/generate', data)
-}
+// 提示词生成接口
+export const generateMinimalPrompt = (data: {
+  persona: string
+  context: string
+  task: string
+  limit: string
+  goal: string
+  note?: string
+}) => api.post('/prompt/generate/minimal', data)
 
-export function saveReview(data: {
-  usage_log_id: number
-  expected_effect: string
-  evaluation_method: string
-  error_handling: string
-  adjustment_notes: string
-  prompt_reasoning: string
-}) {
-  return request.post('/prompts/review', data)
-}
+export const generateComplexPrompt = (data: {
+  role: string
+  background: string
+  task: string
+  requirements: string
+  format: string
+  example: string
+}) => api.post('/prompt/generate/complex', data)
 
-export function getReview(usageLogId: number) {
-  return request.get(`/prompts/review/${usageLogId}`)
-}
+// 复盘接口
+export const createReview = (data: {
+  usageLogId?: number
+  expectedEffect?: string
+  evaluationMethod?: string
+  errorHandling?: string
+  adjustmentNotes?: string
+  promptReasoning?: string
+}) => api.post('/review', data)
 
-// Tips
-export function getTips() {
-  return request.get('/tips')
-}
+// 提示词技巧
+export const getTips = () => api.get('/tips')
 
-export function createTip(data: { title: string; content: string }) {
-  return request.post('/tips', data)
-}
+export default api
