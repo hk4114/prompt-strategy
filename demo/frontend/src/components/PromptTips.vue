@@ -1,144 +1,185 @@
 <template>
-  <Teleport to="body">
-    <div
-      v-show="appStore.showTipsPanel"
-      class="tips-panel"
-      :class="{ minimized: appStore.tipsPanelMinimized }"
-    >
-      <div class="tips-header" @click="appStore.toggleTipsPanel">
-        <span class="tips-icon">💡</span>
-        <span v-if="!appStore.tipsPanelMinimized" class="tips-title">提示词技巧</span>
-        <span class="toggle-icon">{{ appStore.tipsPanelMinimized ? '◀' : '▼' }}</span>
+  <div class="prompt-tips-panel" :class="{ collapsed: isCollapsed }">
+    <div class="panel-header" @click="toggleCollapse">
+      <h3 class="panel-title">
+        <el-icon><Lightning /></el-icon>
+        提示词技巧
+      </h3>
+      <el-icon class="collapse-icon">
+        <ArrowRight v-if="isCollapsed" />
+        <ArrowDown v-else />
+      </el-icon>
+    </div>
+
+    <div v-if="!isCollapsed" class="panel-content">
+      <div v-if="loading" class="loading">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        加载中...
       </div>
-      
-      <div v-if="!appStore.tipsPanelMinimized" class="tips-content">
+
+      <div v-else class="tips-list">
         <div v-for="tip in tips" :key="tip.id" class="tip-item">
-          <h4>{{ tip.title }}</h4>
-          <p>{{ tip.content }}</p>
-        </div>
-        
-        <div v-if="tips.length === 0" class="empty-tips">
-          加载中...
+          <h4 class="tip-title">{{ tip.title }}</h4>
+          <p class="tip-content">{{ tip.content }}</p>
         </div>
       </div>
     </div>
-  </Teleport>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useAppStore } from '@/stores'
-import { getTips } from '@/api/requests'
-
-const appStore = useAppStore()
+import { Lightning, ArrowDown, ArrowRight, Loading } from '@element-plus/icons-vue'
+import { getTips } from '@/api'
 
 interface Tip {
   id: number
   title: string
   content: string
-  sortOrder: number
+  sort_order: number
 }
 
 const tips = ref<Tip[]>([])
+const loading = ref(false)
+const isCollapsed = ref(false)
 
-onMounted(async () => {
+async function loadTips() {
   try {
-    const res = await getTips() as { tips: Tip[] }
-    tips.value = res.tips
+    loading.value = true
+    const data = await getTips()
+    tips.value = data.tips.sort((a: Tip, b: Tip) => a.sort_order - b.sort_order)
   } catch (error) {
     console.error('Failed to load tips:', error)
+  } finally {
+    loading.value = false
   }
+}
+
+function toggleCollapse() {
+  isCollapsed.value = !isCollapsed.value
+}
+
+onMounted(() => {
+  loadTips()
 })
 </script>
 
-<style lang="less" scoped>
-.tips-panel {
+<style scoped lang="less">
+.prompt-tips-panel {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  left: 20px;
+  bottom: 20px;
   width: 320px;
-  max-height: 400px;
-  background: rgba(30, 41, 59, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e4e7ed;
   z-index: 1000;
+  max-height: 500px;
   overflow: hidden;
   transition: all 0.3s ease;
 
-  &.minimized {
-    width: auto;
-    max-height: none;
-    
-    .tips-header {
-      border-bottom: none;
-    }
-  }
-
-  .tips-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 16px;
+  &.collapsed {
+    width: 200px;
+    height: 60px;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background 0.2s ease;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .tips-icon {
-      font-size: 20px;
-    }
-
-    .tips-title {
-      flex: 1;
-      color: #fff;
-      font-weight: 500;
-    }
-
-    .toggle-icon {
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     }
   }
+}
 
-  .tips-content {
-    padding: 16px;
-    max-height: 320px;
-    overflow-y: auto;
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: #409eff;
+  color: white;
+  cursor: pointer;
+  user-select: none;
 
-    .tip-item {
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      margin-bottom: 12px;
+  &:hover {
+    background-color: #66b1ff;
+  }
+}
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
 
-      h4 {
-        color: #a5b4fc;
-        font-size: 14px;
-        margin-bottom: 8px;
-      }
+.collapse-icon {
+  transition: transform 0.3s;
+}
 
-      p {
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 13px;
-        line-height: 1.6;
-        margin: 0;
-      }
-    }
+.panel-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
 
-    .empty-tips {
-      text-align: center;
-      color: rgba(255, 255, 255, 0.5);
-      padding: 20px;
-    }
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #909399;
+
+  .is-loading {
+    animation: rotating 2s linear infinite;
+    margin-right: 8px;
+  }
+}
+
+.tips-list {
+  padding: 16px;
+}
+
+.tip-item {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+.tip-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 8px 0;
+}
+
+.tip-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #606266;
+  margin: 0;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .prompt-tips-panel {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+    max-width: none;
   }
 }
 </style>

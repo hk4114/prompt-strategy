@@ -1,43 +1,31 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useAppStore = defineStore('app', () => {
-    // 复盘弹窗状态
-    const showReviewDialog = ref(false)
-    const currentLogId = ref<number | null>(null)
-    const copiedPrompt = ref('')
+export const usePromptStore = defineStore('prompt', () => {
+  // Global state
+  const currentGeneratedPrompt = ref<string>('')
+  const currentUsageLogId = ref<number | null>(null)
 
-    // 提示词技巧面板状态
-    const showTipsPanel = ref(true)
-    const tipsPanelMinimized = ref(false)
+  // Actions
+  function setGeneratedPrompt(prompt: string, usageLogId?: number) {
+    currentGeneratedPrompt.value = prompt
+    currentUsageLogId.value = usageLogId || null
 
-    // 显示复盘弹窗
-    const openReviewDialog = (logId: number | null, prompt: string) => {
-        currentLogId.value = logId
-        copiedPrompt.value = prompt
-        showReviewDialog.value = true
-    }
+    // Dispatch custom event for App.vue to listen
+    window.dispatchEvent(new CustomEvent('prompt-copied', {
+      detail: { usageLogId }
+    }))
+  }
 
-    // 关闭复盘弹窗
-    const closeReviewDialog = () => {
-        showReviewDialog.value = false
-        currentLogId.value = null
-        copiedPrompt.value = ''
-    }
+  function clearPrompt() {
+    currentGeneratedPrompt.value = ''
+    currentUsageLogId.value = null
+  }
 
-    // 切换技巧面板
-    const toggleTipsPanel = () => {
-        tipsPanelMinimized.value = !tipsPanelMinimized.value
-    }
-
-    return {
-        showReviewDialog,
-        currentLogId,
-        copiedPrompt,
-        showTipsPanel,
-        tipsPanelMinimized,
-        openReviewDialog,
-        closeReviewDialog,
-        toggleTipsPanel
-    }
+  return {
+    currentGeneratedPrompt,
+    currentUsageLogId,
+    setGeneratedPrompt,
+    clearPrompt
+  }
 })

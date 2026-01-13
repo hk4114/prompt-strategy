@@ -1,105 +1,129 @@
 <template>
-  <div class="app-container">
-    <!-- 顶部导航 -->
-    <el-header class="app-header">
-      <div class="logo" @click="router.push('/')">
-        <span class="logo-icon">✨</span>
-        <span class="logo-text">提示词生成系统</span>
-      </div>
-      <el-menu
-        mode="horizontal"
-        :default-active="route.path"
-        router
-        class="nav-menu"
-      >
-        <el-menu-item index="/">首页</el-menu-item>
-        <el-menu-item index="/minimal">最小公式</el-menu-item>
-        <el-menu-item index="/templates">提示词模板</el-menu-item>
-        <el-menu-item index="/complex">复杂提示词</el-menu-item>
-      </el-menu>
-    </el-header>
+  <el-config-provider :locale="zhCn">
+    <div id="app">
+      <el-container>
+        <el-header>
+          <nav class="nav-header">
+            <h1 class="logo">提示词生成系统</h1>
+            <el-menu
+              :default-active="activeMenu"
+              mode="horizontal"
+              router
+              class="nav-menu"
+            >
+              <el-menu-item index="/">首页</el-menu-item>
+              <el-menu-item index="/minimal-formula">最小公式</el-menu-item>
+              <el-menu-item index="/templates">提示词模版</el-menu-item>
+              <el-menu-item index="/complex-prompt">复杂提示词</el-menu-item>
+            </el-menu>
+          </nav>
+        </el-header>
 
-    <!-- 主内容区 -->
-    <el-main class="app-main">
-      <router-view />
-    </el-main>
+        <el-main>
+          <router-view />
+        </el-main>
+      </el-container>
 
-    <!-- 提示词技巧浮窗 -->
-    <PromptTips />
+      <!-- Review Dialog -->
+      <ReviewDialog
+        v-model="reviewDialogVisible"
+        :usage-log-id="currentUsageLogId"
+      />
 
-    <!-- 复盘检查弹窗 -->
-    <ReviewDialog />
-  </div>
+      <!-- Prompt Tips Panel -->
+      <PromptTips />
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
-import PromptTips from './components/PromptTips.vue'
-import ReviewDialog from './components/ReviewDialog.vue'
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import zhCn from "element-plus/es/locale/lang/zh-cn";
+import ReviewDialog from "./components/ReviewDialog.vue";
+import PromptTips from "./components/PromptTips.vue";
+import { usePromptStore } from "./stores";
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const promptStore = usePromptStore();
+
+const activeMenu = computed(() => route.path);
+const reviewDialogVisible = ref(false);
+const currentUsageLogId = ref<number | null>(null);
+
+// Listen for prompt copy event
+onMounted(() => {
+  window.addEventListener("prompt-copied", (event: any) => {
+    currentUsageLogId.value = event.detail?.usageLogId || null;
+    reviewDialogVisible.value = true;
+  });
+});
+
+// Provide global functions
+window.showReviewDialog = (usageLogId?: number) => {
+  currentUsageLogId.value = usageLogId || null;
+  reviewDialogVisible.value = true;
+};
 </script>
 
 <style lang="less">
-.app-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.app-header {
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  background-color: #f5f7fa;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.el-container {
+  min-height: 100vh;
+}
+
+.el-header {
+  background-color: #fff;
+  border-bottom: 1px solid #dcdfe6;
+  padding: 0;
+  height: 60px !important;
+}
+
+.nav-header {
   display: flex;
   align-items: center;
-  padding: 0 24px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 100%;
+  padding: 0 20px;
 
   .logo {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
+    font-size: 20px;
+    font-weight: 600;
+    color: #409eff;
     margin-right: 40px;
-
-    .logo-icon {
-      font-size: 24px;
-      margin-right: 8px;
-    }
-
-    .logo-text {
-      font-size: 18px;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+    margin: 0 40px 0 0;
   }
 
   .nav-menu {
     flex: 1;
-    background: transparent;
-    border: none;
-
-    .el-menu-item {
-      color: rgba(255, 255, 255, 0.7);
-      border-bottom: none;
-
-      &:hover {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.1);
-      }
-
-      &.is-active {
-        color: #667eea;
-        border-bottom: 2px solid #667eea;
-      }
-    }
+    border-bottom: none;
   }
 }
 
-.app-main {
+.el-main {
+  padding: 20px;
+  background-color: #f5f7fa;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #fff;
   padding: 24px;
-  min-height: calc(100vh - 60px);
+  border-radius: 8px;
 }
 </style>

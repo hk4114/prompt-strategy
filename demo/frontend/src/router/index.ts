@@ -1,37 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '@/views/HomeView.vue'
+import MinimalFormula from '@/views/MinimalFormula.vue'
+import TemplateList from '@/views/TemplateList.vue'
+import ComplexPrompt from '@/views/ComplexPrompt.vue'
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes: [
-        {
-            path: '/',
-            name: 'home',
-            component: () => import('@/views/HomeView.vue'),
-            meta: { title: '首页' }
-        },
-        {
-            path: '/minimal',
-            name: 'minimal',
-            component: () => import('@/views/MinimalFormula.vue'),
-            meta: { title: '最小公式' }
-        },
-        {
-            path: '/templates',
-            name: 'templates',
-            component: () => import('@/views/TemplateList.vue'),
-            meta: { title: '提示词模板' }
-        },
-        {
-            path: '/complex',
-            name: 'complex',
-            component: () => import('@/views/ComplexPrompt.vue'),
-            meta: { title: '复杂提示词' }
-        }
-    ]
-})
-
-router.beforeEach((to) => {
-    document.title = `${to.meta.title} - 提示词生成系统`
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView
+    },
+    {
+      path: '/minimal-formula',
+      name: 'minimal-formula',
+      component: MinimalFormula
+    },
+    {
+      path: '/templates',
+      name: 'templates',
+      component: TemplateList
+    },
+    {
+      path: '/complex-prompt',
+      name: 'complex-prompt',
+      component: ComplexPrompt
+    }
+  ]
 })
 
 export default router

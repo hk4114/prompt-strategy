@@ -1,174 +1,167 @@
 <template>
   <el-dialog
-    v-model="appStore.showReviewDialog"
-    title="📝 复盘检查清单"
+    v-model="dialogVisible"
+    title="复盘检查清单"
     width="600px"
     :close-on-click-modal="false"
-    @close="handleClose"
   >
-    <div class="review-intro">
-      <p>提示词已复制！花1分钟记录你的思考，帮助你不断进步。</p>
+    <div class="review-dialog">
+      <p class="review-intro">
+        复制提示词后，请花几分钟回答以下问题，帮助改进提示词质量：
+      </p>
+
+      <el-form ref="formRef" :model="reviewForm" label-position="top">
+        <el-form-item label="1. 预期达到的效果？">
+          <el-input
+            v-model="reviewForm.expected_effect"
+            type="textarea"
+            :rows="2"
+            placeholder="描述你期望这个提示词达到什么效果..."
+          />
+        </el-form-item>
+
+        <el-form-item label="2. 如何评价（验证）这次生成的结果？">
+          <el-input
+            v-model="reviewForm.evaluation_method"
+            type="textarea"
+            :rows="2"
+            placeholder="说明你将如何验证AI的回答是否符合预期..."
+          />
+        </el-form-item>
+
+        <el-form-item label="3. 是否有明显错误答案？你怎么处理的？">
+          <el-input
+            v-model="reviewForm.error_handling"
+            type="textarea"
+            :rows="2"
+            placeholder="记录是否有明显错误的回答，以及你的处理方法..."
+          />
+        </el-form-item>
+
+        <el-form-item label="4. 生成的内容和你的预期不符，我是如何调整优化的？">
+          <el-input
+            v-model="reviewForm.adjustment_notes"
+            type="textarea"
+            :rows="2"
+            placeholder="记录如果结果不符预期，你做了哪些调整..."
+          />
+        </el-form-item>
+
+        <el-form-item label="5. 我为什么这么写提示词？">
+          <el-input
+            v-model="reviewForm.prompt_reasoning"
+            type="textarea"
+            :rows="2"
+            placeholder="思考你为什么会这样写提示词，背后的逻辑是什么..."
+          />
+        </el-form-item>
+      </el-form>
     </div>
 
-    <el-form :model="reviewData" label-position="top">
-      <el-form-item label="1. 预期达到的效果？">
-        <el-input
-          v-model="reviewData.expectedEffect"
-          type="textarea"
-          :rows="2"
-          placeholder="你希望AI生成什么样的内容？"
-        />
-      </el-form-item>
-
-      <el-form-item label="2. 如何评价（验证）这次生成的结果？">
-        <el-input
-          v-model="reviewData.evaluationMethod"
-          type="textarea"
-          :rows="2"
-          placeholder="你会用什么标准来判断结果好不好？"
-        />
-      </el-form-item>
-
-      <el-form-item label="3. 是否有明显错误答案？你怎么处理的？">
-        <el-input
-          v-model="reviewData.errorHandling"
-          type="textarea"
-          :rows="2"
-          placeholder="遇到错误时的处理方式"
-        />
-      </el-form-item>
-
-      <el-form-item label="4. 生成的内容和预期不符，如何调整优化？">
-        <el-input
-          v-model="reviewData.adjustmentNotes"
-          type="textarea"
-          :rows="2"
-          placeholder="你做了哪些调整？"
-        />
-      </el-form-item>
-
-      <el-form-item label="5. 我为什么这么写提示词？">
-        <el-input
-          v-model="reviewData.promptReasoning"
-          type="textarea"
-          :rows="2"
-          placeholder="记录你的思考过程"
-        />
-      </el-form-item>
-    </el-form>
-
     <template #footer>
-      <el-button @click="handleSkip">跳过</el-button>
-      <el-button type="primary" @click="handleSubmit" :loading="submitting">
-        保存复盘
-      </el-button>
+      <div class="dialog-footer">
+        <el-button @click="dialogVisible = false">
+          稍后再说
+        </el-button>
+        <el-button
+          type="primary"
+          @click="saveReview"
+          :loading="saving"
+          :icon="Check"
+        >
+          保存复盘
+        </el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useAppStore } from '@/stores'
-import { saveReview } from '@/api/requests'
+import { Check } from '@element-plus/icons-vue'
+import { saveReview } from '@/api'
 
-const appStore = useAppStore()
-const submitting = ref(false)
+interface Props {
+  modelValue: boolean
+  usageLogId?: number | null
+}
 
-const reviewData = reactive({
-  expectedEffect: '',
-  evaluationMethod: '',
-  errorHandling: '',
-  adjustmentNotes: '',
-  promptReasoning: ''
+interface Emit {
+  (e: 'update:modelValue', value: boolean): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emit>()
+
+const dialogVisible = ref(false)
+const saving = ref(false)
+
+const reviewForm = ref({
+  expected_effect: '',
+  evaluation_method: '',
+  error_handling: '',
+  adjustment_notes: '',
+  prompt_reasoning: ''
 })
 
-// 重置表单
-watch(() => appStore.showReviewDialog, (show) => {
-  if (show) {
-    reviewData.expectedEffect = ''
-    reviewData.evaluationMethod = ''
-    reviewData.errorHandling = ''
-    reviewData.adjustmentNotes = ''
-    reviewData.promptReasoning = ''
+watch(() => props.modelValue, (val) => {
+  dialogVisible.value = val
+})
+
+watch(dialogVisible, (val) => {
+  emit('update:modelValue', val)
+})
+
+async function saveReview() {
+  if (!props.usageLogId) {
+    ElMessage.warning('请先复制提示词')
+    return
   }
-})
 
-const handleSubmit = async () => {
-  submitting.value = true
+  saving.value = true
   try {
     await saveReview({
-      usageLogId: appStore.currentLogId ?? undefined,
-      expectedEffect: reviewData.expectedEffect,
-      evaluationMethod: reviewData.evaluationMethod,
-      errorHandling: reviewData.errorHandling,
-      adjustmentNotes: reviewData.adjustmentNotes,
-      promptReasoning: reviewData.promptReasoning
+      usage_log_id: props.usageLogId,
+      expected_effect: reviewForm.value.expected_effect,
+      evaluation_method: reviewForm.value.evaluation_method,
+      error_handling: reviewForm.value.error_handling,
+      adjustment_notes: reviewForm.value.adjustment_notes,
+      prompt_reasoning: reviewForm.value.prompt_reasoning
     })
-    
-    ElMessage.success('复盘已保存！继续加油 💪')
-    appStore.closeReviewDialog()
+
+    ElMessage.success('复盘已保存')
+    dialogVisible.value = false
+
+    // Reset form
+    reviewForm.value = {
+      expected_effect: '',
+      evaluation_method: '',
+      error_handling: '',
+      adjustment_notes: '',
+      prompt_reasoning: ''
+    }
   } catch (error) {
-    ElMessage.error('保存失败，请重试')
+    console.error('Save review error:', error)
+    ElMessage.error('保存失败')
   } finally {
-    submitting.value = false
+    saving.value = false
   }
-}
-
-const handleSkip = () => {
-  appStore.closeReviewDialog()
-}
-
-const handleClose = () => {
-  appStore.closeReviewDialog()
 }
 </script>
 
-<style lang="less" scoped>
-.review-intro {
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-
-  p {
-    color: #a5b4fc;
-    margin: 0;
-    font-size: 14px;
+<style scoped lang="less">
+.review-dialog {
+  .review-intro {
+    color: #909399;
+    margin-bottom: 20px;
+    line-height: 1.6;
   }
 }
 
-:deep(.el-dialog) {
-  background: #1e293b;
-  border-radius: 16px;
-
-  .el-dialog__title {
-    color: #fff;
-    font-size: 18px;
-  }
-
-  .el-dialog__body {
-    padding: 20px 24px;
-  }
-
-  .el-form-item__label {
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-  }
-
-  .el-textarea__inner {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #fff;
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    &:focus {
-      border-color: #667eea;
-    }
-  }
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

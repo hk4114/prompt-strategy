@@ -1,195 +1,207 @@
 <template>
-  <div class="complex-prompt">
-    <div class="page-header">
-      <h1 class="section-title">
-        <span class="highlight">复杂任务</span> 8步法
-      </h1>
-      <p class="page-desc">适用于值得花2小时处理的复杂任务</p>
-    </div>
-
-    <!-- 步骤指示器 -->
-    <div class="steps-indicator glass-card">
-      <div
-        v-for="(step, index) in steps"
-        :key="index"
-        class="step-item"
-        :class="{ active: currentStep === index, completed: currentStep > index }"
-        @click="currentStep = index"
-      >
-        <span class="step-number">{{ index + 1 }}</span>
-        <span class="step-name">{{ step.name }}</span>
-      </div>
-    </div>
-
-    <div class="content-wrapper">
-      <!-- 当前步骤表单 -->
-      <div class="step-content glass-card">
-        <div class="step-header">
-          <h2>{{ steps[currentStep].name }}</h2>
-          <p class="step-desc">{{ steps[currentStep].description }}</p>
-        </div>
-
-        <el-form label-position="top" size="large">
-          <!-- 步骤1: 明确问题 -->
-          <template v-if="currentStep === 0">
-            <el-form-item label="你要解决的问题是什么？">
-              <el-input
-                v-model="formData.problem"
-                type="textarea"
-                :rows="4"
-                placeholder="详细描述你遇到的问题或任务"
-              />
-            </el-form-item>
-            <el-form-item label="上下文背景">
-              <el-input
-                v-model="formData.background"
-                type="textarea"
-                :rows="3"
-                placeholder="提供相关的背景信息"
-              />
-            </el-form-item>
-          </template>
-
-          <!-- 步骤2: 选择角色 -->
-          <template v-if="currentStep === 1">
-            <el-form-item label="你需要哪些专家角色？">
-              <el-input
-                v-model="formData.role"
-                type="textarea"
-                :rows="3"
-                placeholder="例如：资深产品经理、技术架构师、用户体验专家"
-              />
-            </el-form-item>
-            <el-alert type="info" :closable="false">
-              💡 提示：可以让 AI 自选角色 - "你们认为解决这个问题，最需要哪三类专家角色？"
-            </el-alert>
-          </template>
-
-          <!-- 步骤3: 连续提问 -->
-          <template v-if="currentStep === 2">
-            <el-form-item label="边界条件和约束">
-              <el-input
-                v-model="formData.constraints"
-                type="textarea"
-                :rows="4"
-                placeholder="列出所有限制条件、边界、必须满足的要求"
-              />
-            </el-form-item>
-            <el-alert type="info" :closable="false">
-              💡 提示：加入这句话 - "在行动前，请向我连续提问，直到你 95%确信理解我的目标和边界。"
-            </el-alert>
-          </template>
-
-          <!-- 步骤4: 具体情境 -->
-          <template v-if="currentStep === 3">
-            <el-form-item label="第一个具体任务">
-              <el-input
-                v-model="formData.task"
-                type="textarea"
-                :rows="4"
-                placeholder="先跑一个最具体、最小的任务来验证"
-              />
-            </el-form-item>
-          </template>
-
-          <!-- 步骤5: 迭代表现 -->
-          <template v-if="currentStep === 4">
-            <el-form-item label="输出要求">
-              <el-input
-                v-model="formData.requirements"
-                type="textarea"
-                :rows="3"
-                placeholder="根据上一轮的表现，明确输出要求"
-              />
-            </el-form-item>
-          </template>
-
-          <!-- 步骤6: 红队挑刺 -->
-          <template v-if="currentStep === 5">
-            <el-form-item label="潜在风险和漏洞">
-              <el-input
-                v-model="formData.risks"
-                type="textarea"
-                :rows="3"
-                placeholder="假设这个项目彻底失败，最可能的原因是什么？"
-              />
-            </el-form-item>
-            <el-alert type="warning" :closable="false">
-              ⚠️ 红队思维：成立一个小组，唯一任务就是挑这个方案的毛病
-            </el-alert>
-          </template>
-
-          <!-- 步骤7: 输出格式 -->
-          <template v-if="currentStep === 6">
-            <el-form-item label="期望的输出格式">
-              <el-input
-                v-model="formData.format"
-                type="textarea"
-                :rows="3"
-                placeholder="例如：Markdown格式、分点列出、包含代码示例"
-              />
-            </el-form-item>
-            <el-form-item label="范例">
-              <el-input
-                v-model="formData.example"
-                type="textarea"
-                :rows="3"
-                placeholder="提供一个你期望的输出范例"
-              />
-            </el-form-item>
-          </template>
-
-          <!-- 步骤8: 生成模板 -->
-          <template v-if="currentStep === 7">
-            <el-alert type="success" :closable="false" style="margin-bottom: 20px;">
-              🎉 太棒了！你已完成所有步骤，点击下方按钮生成最终提示词
-            </el-alert>
-          </template>
-        </el-form>
-
-        <div class="step-actions">
-          <el-button v-if="currentStep > 0" @click="currentStep--">
-            上一步
-          </el-button>
-          <el-button 
-            v-if="currentStep < steps.length - 1" 
-            type="primary" 
-            @click="currentStep++"
-          >
-            下一步
-          </el-button>
-          <el-button 
-            v-if="currentStep === steps.length - 1" 
-            type="primary" 
-            @click="handleGenerate"
-            :loading="generating"
-          >
-            ✨ 生成提示词
-          </el-button>
-        </div>
+  <div class="complex-prompt-page">
+    <div class="page-container">
+      <div class="page-header">
+        <h1 class="page-title">复杂提示词生成</h1>
+        <p class="page-subtitle">使用8步法构建高质量提示词</p>
       </div>
 
-      <!-- 结果预览 -->
-      <div class="result-section glass-card">
-        <div class="result-header">
-          <h3>生成结果预览</h3>
-          <el-button 
-            v-if="generatedPrompt" 
-            type="primary" 
-            size="small"
-            @click="handleCopy"
-          >
-            📋 复制
-          </el-button>
-        </div>
-        <div class="result-content">
-          <pre v-if="generatedPrompt">{{ generatedPrompt }}</pre>
-          <div v-else class="empty-state">
-            <span class="empty-icon">🎯</span>
-            <p>完成8个步骤后生成提示词</p>
+      <!-- 8 Steps -->
+      <el-card class="steps-card" shadow="never">
+        <el-steps :active="currentStep" finish-status="success" align-center>
+          <el-step
+            v-for="(step, index) in steps"
+            :key="index"
+            :title="step.title"
+            @click="currentStep = index"
+          />
+        </el-steps>
+
+        <div class="step-content">
+          <div v-if="currentStep === 0" class="step-form">
+            <h3>{{ steps[0].title }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="你面临的核心问题是什么：">
+                <el-input
+                  v-model="stepData.problem"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="描述你的核心问题..."
+                />
+              </el-form-item>
+              <el-form-item label="相关背景信息：">
+                <el-input
+                  v-model="stepData.background"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="提供相关的背景信息..."
+                />
+              </el-form-item>
+              <el-button type="primary" @click="nextStep">下一步</el-button>
+            </el-form>
+          </div>
+
+          <div v-else-if="currentStep === 1" class="step-form">
+            <h3>{{ steps[1].title }}</h3>
+            <p class="step-description">我会帮你选择最合适的专家角色来解决问题。</p>
+            <el-button type="primary" @click="autoGenerateRoles">生成推荐角色</el-button>
+            <div v-if="stepData.roles.length > 0" class="roles-list">
+              <h4>推荐角色：</h4>
+              <el-tag
+                v-for="role in stepData.roles"
+                :key="role"
+                size="large"
+                effect="dark"
+                style="margin: 4px"
+              >
+                {{ role }}
+              </el-tag>
+            </div>
+            <el-button type="primary" @click="nextStep" style="margin-top: 20px">下一步</el-button>
+          </div>
+
+          <div v-else-if="currentStep === 2" class="step-form">
+            <h3>{{ steps[2].title }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="让AI通过提问更好地理解你的需求：">
+                <div class="questions-list">
+                  <div v-for="question in stepData.questions" :key="question" class="question-item">
+                    <el-icon><QuestionFilled /></el-icon>
+                    {{ question }}
+                  </div>
+                </div>
+                <el-button type="primary" @click="generateQuestions" style="margin-top: 10px">
+                  生成问题
+                </el-button>
+              </el-form-item>
+              <el-form-item label="你的回答：">
+                <el-input
+                  v-model="stepData.answers"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="回答上述问题..."
+                />
+              </el-form-item>
+              <el-button type="primary" @click="nextStep">下一步</el-button>
+            </el-form>
+          </div>
+
+          <div v-else-if="currentStep === 3" class="step-form">
+            <h3>{{ steps[3].title }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="具体情境描述：">
+                <el-input
+                  v-model="stepData.scenario"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="描述一个具体的使用情境..."
+                />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="previewScenario">预览情境</el-button>
+              </el-form-item>
+              <el-form-item label="预览：" v-if="stepData.scenarioPreview">
+                <el-alert :title="stepData.scenarioPreview" type="info" :closable="false" />
+              </el-form-item>
+              <el-button type="primary" @click="nextStep">下一步</el-button>
+            </el-form>
+          </div>
+
+          <div v-else-if="currentStep === 4" class="step-form">
+            <h3>{{ steps[4].title }}</h3>
+            <p class="step-description">请评估第一次尝试的效果</p>
+            <el-form label-position="top">
+              <el-form-item label="第一次尝试的结果：">
+                <el-input
+                  v-model="stepData.firstAttempt"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="记录你的第一次尝试..."
+                />
+              </el-form-item>
+              <el-form-item label="需要改进的地方：">
+                <el-input
+                  v-model="stepData.improvements"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="列出需要改进的地方..."
+                />
+              </el-form-item>
+              <el-button type="primary" @click="nextStep">下一步</el-button>
+            </el-form>
+          </div>
+
+          <div v-else-if="currentStep === 5" class="step-form">
+            <h3>{{ steps[5].title }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="让红队来挑刺：">
+                <el-input
+                  v-model="stepData.redTeamFeedback"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="假设方案失败，最可能的原因是什么？"
+                />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="simulateRedTeam">模拟红队挑刺</el-button>
+              </el-form-item>
+              <el-alert
+                v-if="stepData.redTeamResult"
+                :title="stepData.redTeamResult"
+                type="warning"
+                :closable="false"
+                style="margin-bottom: 20px"
+              />
+              <el-button type="primary" @click="nextStep">下一步</el-button>
+            </el-form>
+          </div>
+
+          <div v-else-if="currentStep === 6" class="step-form">
+            <h3>{{ steps[6].title }}</h3>
+            <el-form label-position="top">
+              <el-form-item label="找到的最佳回答（SSR）：">
+                <el-input
+                  v-model="stepData.ssrAnswer"
+                  type="textarea"
+                  :rows="6"
+                  placeholder="粘贴你认为最好的回答..."
+                />
+              </el-form-item>
+              <el-form-item label="微调要点：">
+                <el-input
+                  v-model="stepData.refinements"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="基于最佳回答的微调要点..."
+                />
+              </el-form-item>
+              <el-button type="primary" @click="nextStep">下一步</el-button>
+            </el-form>
+          </div>
+
+          <div v-else class="step-form">
+            <el-result icon="success" title="生成完成" sub-title="你的复杂提示词已经生成">
+              <template #extra>
+                <el-button type="primary" @click="generateFinalPrompt">生成最终提示词</el-button>
+              </template>
+            </el-result>
           </div>
         </div>
-      </div>
+      </el-card>
+
+      <!-- Final Result -->
+      <el-card v-if="finalPrompt" class="result-card" shadow="never" style="margin-top: 20px">
+        <h3>最终生成的提示词</h3>
+        <el-input
+          v-model="finalPrompt"
+          type="textarea"
+          :rows="15"
+          readonly
+          style="margin: 20px 0"
+        />
+        <el-button type="success" @click="copyFinal" icon="DocumentCopy">复制提示词</el-button>
+        <el-button @click="resetAll">重新开始</el-button>
+      </el-card>
     </div>
   </div>
 </template>
@@ -197,230 +209,202 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { generatePrompt } from '@/api/requests'
-import { useAppStore } from '@/stores'
+import { generatePrompt as apiGeneratePrompt } from '@/api'
+import { usePromptStore } from '@/stores'
 
-const appStore = useAppStore()
-
-const steps = [
-  { name: '明确问题', description: '清晰定义要解决的问题和上下文' },
-  { name: '选择角色', description: '确定需要哪些专家角色' },
-  { name: '连续提问', description: '明确边界条件，让AI充分理解' },
-  { name: '具体情境', description: '先跑一个最小化的具体任务' },
-  { name: '迭代优化', description: '根据表现调整要求' },
-  { name: '红队挑刺', description: '识别潜在风险和漏洞' },
-  { name: '输出格式', description: '定义期望的输出格式和范例' },
-  { name: '生成模板', description: '生成可复用的提示词模板' }
-]
+const promptStore = usePromptStore()
 
 const currentStep = ref(0)
-const generating = ref(false)
-const generatedPrompt = ref('')
-const currentLogId = ref<number | null>(null)
+const finalPrompt = ref('')
+const usageLogId = ref<number | null>(null)
 
-const formData = reactive({
+const steps = [
+  { title: '明确问题与上下文' },
+  { title: '自选必要角色' },
+  { title: '连续提问' },
+  { title: '具体情境' },
+  { title: '根据表现迭代' },
+  { title: '红队挑刺' },
+  { title: '抽到SSR' },
+  { title: '抽象成模板' }
+]
+
+const stepData = reactive({
   problem: '',
   background: '',
-  role: '',
-  constraints: '',
-  task: '',
-  requirements: '',
-  risks: '',
-  format: '',
-  example: ''
+  roles: [] as string[],
+  questions: [] as string[],
+  answers: '',
+  scenario: '',
+  scenarioPreview: '',
+  firstAttempt: '',
+  improvements: '',
+  redTeamFeedback: '',
+  redTeamResult: '',
+  ssrAnswer: '',
+  refinements: ''
 })
 
-const handleGenerate = async () => {
-  generating.value = true
-  try {
-    const res = await generatePrompt({
-      promptType: 'complex_8step',
-      formData: {
-        role: formData.role,
-        background: `${formData.problem}\n\n背景：${formData.background}\n\n约束条件：${formData.constraints}`,
-        task: formData.task,
-        requirements: `${formData.requirements}\n\n需要规避的风险：${formData.risks}`,
-        format: formData.format,
-        example: formData.example
-      }
-    }) as { prompt: string; logId: number }
-    
-    generatedPrompt.value = res.prompt
-    currentLogId.value = res.logId
-    ElMessage.success('生成成功!')
-  } catch (error) {
-    ElMessage.error('生成失败，请重试')
-  } finally {
-    generating.value = false
+function nextStep() {
+  if (currentStep.value < steps.length - 1) {
+    currentStep.value++
+  } else {
+    generateFinalPrompt()
   }
 }
 
-const handleCopy = async () => {
+function autoGenerateRoles() {
+  stepData.roles = ['领域专家', '产品经理', '技术架构师']
+  ElMessage.success('已生成推荐角色')
+}
+
+function generateQuestions() {
+  stepData.questions = [
+    '这个任务的目标用户是谁？',
+    '期望的最终输出是什么格式？',
+    '有没有必须遵循的约束条件？',
+    '任务的优先级如何？',
+    '预期的时间范围是多少？'
+  ]
+  ElMessage.success('已生成提问清单')
+}
+
+function previewScenario() {
+  stepData.scenarioPreview = `情境预览：${stepData.scenario}`
+}
+
+function simulateRedTeam() {
+  stepData.redTeamResult = `红队分析：方案如果失败，最可能的原因是：${stepData.redTeamFeedback || '缺乏充分的用户调研和技术可行性分析'}`
+}
+
+async function generateFinalPrompt() {
+  const prompt = `### 角色
+作为 ${stepData.roles.join(', ') || '[领域专家]'} 专家
+
+### 背景
+当前面临 ${stepData.problem || '[未定义的问题]'} 问题
+${stepData.background || '[未提供背景信息]'}
+
+### 任务
+${stepData.scenario || '[未提供具体情境]'}
+
+### 要求
+基于用户回答：${stepData.answers || '[无回答]'}
+优化方向：${stepData.improvements || '[未提供]'}
+
+### 红队反馈
+${stepData.redTeamResult || '[无红队反馈]'}
+
+### 最终优化
+${stepData.refinements || '[未提供微调要点]'}
+
+### 格式
+1. 请使用 Markdown 格式输出
+2. 首先给出一个 1-10 分的总体评分和一句话总结
+3. 然后分 '优势'、'劣势' 和 '致命风险' 三个板块进行详细论述`
+
+  finalPrompt.value = prompt
+
+  // Save to backend
   try {
-    await navigator.clipboard.writeText(generatedPrompt.value)
-    ElMessage.success('已复制到剪贴板')
-    
-    // 弹出复盘检查清单
-    appStore.openReviewDialog(currentLogId.value, generatedPrompt.value)
+    const result = await apiGeneratePrompt({
+      prompt_type: 'complex_8step',
+      generated_prompt: finalPrompt.value,
+      form_data: stepData
+    })
+    usageLogId.value = result.usage_log_id
+    ElMessage.success('提示词已生成并保存')
   } catch (error) {
-    ElMessage.error('复制失败')
+    console.error('Save error:', error)
+    ElMessage.warning('生成成功，但保存失败')
   }
+}
+
+function copyFinal() {
+  navigator.clipboard.writeText(finalPrompt.value).then(() => {
+    ElMessage.success('已复制到剪贴板')
+    promptStore.setGeneratedPrompt(finalPrompt.value, usageLogId.value)
+  })
+}
+
+function resetAll() {
+  currentStep.value = 0
+  finalPrompt.value = ''
+  Object.assign(stepData, {
+    problem: '', background: '', roles: [], questions: [],
+    answers: '', scenario: '', scenarioPreview: '',
+    firstAttempt: '', improvements: '', redTeamFeedback: '',
+    redTeamResult: '', ssrAnswer: '', refinements: ''
+  })
 }
 </script>
 
-<style lang="less" scoped>
-.complex-prompt {
+<style scoped>
+.complex-prompt-page {
+  padding: 20px 0;
+}
+
+.page-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 20px;
+}
 
-  .page-header {
-    text-align: center;
-    margin-bottom: 32px;
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
 
-    .page-desc {
-      color: rgba(255, 255, 255, 0.7);
-    }
-  }
+.page-title {
+  font-size: 36px;
+  margin: 0 0 8px 0;
+  color: #333;
+}
 
-  .steps-indicator {
-    display: flex;
-    padding: 20px;
-    margin-bottom: 24px;
-    overflow-x: auto;
-    gap: 8px;
+.page-subtitle {
+  font-size: 18px;
+  color: #666;
+  margin: 0;
+}
 
-    .step-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-      color: rgba(255, 255, 255, 0.5);
+.steps-card {
+  margin-bottom: 20px;
+}
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
+.step-content {
+  margin-top: 30px;
+  padding: 20px;
+}
 
-      &.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #fff;
-      }
+.step-form h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
 
-      &.completed {
-        color: #10b981;
+.step-description {
+  color: #606266;
+  margin-bottom: 20px;
+}
 
-        .step-number {
-          background: #10b981;
-          border-color: #10b981;
-        }
-      }
+.roles-list {
+  margin: 20px 0;
+}
 
-      .step-number {
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid currentColor;
-        border-radius: 50%;
-        font-size: 12px;
-        font-weight: 600;
-      }
+.questions-list {
+  margin-bottom: 20px;
+}
 
-      .step-name {
-        font-size: 14px;
-      }
-    }
-  }
+.question-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4e7ed;
+}
 
-  .content-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-
-    @media (max-width: 900px) {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .step-content {
-    padding: 32px;
-
-    .step-header {
-      margin-bottom: 24px;
-
-      h2 {
-        color: #fff;
-        font-size: 20px;
-        margin-bottom: 8px;
-      }
-
-      .step-desc {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 14px;
-      }
-    }
-
-    .step-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-      justify-content: flex-end;
-    }
-  }
-
-  .result-section {
-    padding: 32px;
-    display: flex;
-    flex-direction: column;
-
-    .result-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      h3 {
-        color: #fff;
-        font-size: 18px;
-      }
-    }
-
-    .result-content {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      padding: 20px;
-      overflow: auto;
-      min-height: 400px;
-
-      pre {
-        color: rgba(255, 255, 255, 0.9);
-        font-family: 'Monaco', 'Menlo', monospace;
-        font-size: 14px;
-        line-height: 1.8;
-        white-space: pre-wrap;
-        word-break: break-word;
-        margin: 0;
-      }
-
-      .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: rgba(255, 255, 255, 0.5);
-
-        .empty-icon {
-          font-size: 48px;
-          margin-bottom: 16px;
-        }
-      }
-    }
-  }
+@media (max-width: 768px) {
+  .page-title { font-size: 28px; }
+  .page-subtitle { font-size: 16px; }
 }
 </style>
