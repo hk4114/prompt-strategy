@@ -18,6 +18,7 @@ def init_database():
             {'category_key': 'image', 'name': '图像', 'icon': '🎨', 'sort_order': 3},
             {'category_key': 'knowledge', 'name': '效率与知识库', 'icon': '📚', 'sort_order': 4},
             {'category_key': 'agent', 'name': '智能体', 'icon': '🤖', 'sort_order': 5},
+            {'category_key': 'google', 'name': 'google 全家桶', 'icon': '🍌', 'sort_order': 6},
         ]
 
         category_map = {}
@@ -100,6 +101,55 @@ def init_database():
             {'category_key': 'agent', 'name': 'AutoGLM', 'url': 'https://autoglm.zhipuai.cn/',
              'recommend_reason': '能够操控浏览器的智能体，帮你自动订票、填表。', 'price': '免费',
              'tags': ['浏览器操控', '自动化', '智谱AI', 'Agent']},
+
+            #  谷歌全家桶
+            {"category_key": "google",
+          "name": "Gemini (nano banana2)",
+          "url": "https://gemini.google.com/",
+          "recommend_reason": "含在 Gemini 订阅中，或通过 API 调用。",
+          "price": "约 ¥1/张",
+          "tags": ["文生图", "API", "谷歌", "nano", "每日限额"]
+        },
+        {
+          "name": "NotebookLM",
+          "category_key": "google",
+          "url": "https://notebooklm.google.com/",
+          "recommend_reason": "丢进去一堆 PDF，能生成播客、摘要、思维导图。",
+          "price": "免费",
+          "tags": ["PDF", "播客", "摘要", "思维导图", "谷歌", "知识库"]
+        },
+        {
+          "name": "stitch",
+          "category_key": "google",
+          "url": "https://stitch.withgoogle.com/",
+          "recommend_reason": "原型",
+          "price": "免费",
+          "tags": ["原型", "产品", "API", "谷歌", "每日限额"]
+        },
+        {
+          "name": "antigravity",
+          "category_key": "google",
+          "url": "https://antigravity.google/",
+          "recommend_reason": "IDE",
+          "price": "免费",
+          "tags": ["开发", "编程", "API", "谷歌"]
+        },
+        {
+          "name": "Gemini CLI",
+          "category_key": "google",
+          "url": "https://my.feishu.cn/wiki/GrVlw4opIioIyVkIFLWcdfoUn2e",
+          "recommend_reason": "IDE",
+          "price": "免费",
+          "tags": ["开发", "编程", "API", "谷歌", "开源"]
+        },
+        {
+          "name": "AI studio",
+          "category_key": "google",
+          "url": "https://aistudio.google.com/api-keys",
+          "recommend_reason": "平台",
+          "price": "免费",
+          "tags": ["开发", "编程", "API", "谷歌", "开源"]
+        }
         ]
 
         for i, prod_data in enumerate(products_data):
