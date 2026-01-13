@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .api-test { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>提示词生成系统 API 测试</h1>
+
+    <div class="api-test">
+        <h2>测试 /api/categories</h2>
+        <button onclick="testCategories()">测试分类接口</button>
+        <div id="categories-result"></div>
+    </div>
+
+    <div class="api-test">
+        <h2>测试 /api/tips</h2>
+        <button onclick="testTips()">测试技巧接口</button>
+        <div id="tips-result"></div>
+    </div>
+
+    <div class="api-test">
+        <h2>测试 /api/templates</h2>
+        <button onclick="testTemplates()">测试模板接口</button>
+        <div id="templates-result"></div>
+    </div>
+
+    <script>
+        async function testCategories() {
+            const result = document.getElementById('categories-result');
+            try {
+                const response = await fetch('http://localhost:5001/api/categories');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✓ 成功 (${response.status})</div>
+                                   <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 错误: ${error.message}</div>`;
+            }
+        }
+
+        async function testTips() {
+            const result = document.getElementById('tips-result');
+            try {
+                const response = await fetch('http://localhost:5001/api/tips');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✓ 成功 (${response.status})</div>
+                                   <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 错误: ${error.message}</div>`;
+            }
+        }
+
+        async function testTemplates() {
+            const result = document.getElementById('templates-result');
+            try {
+                const response = await fetch('http://localhost:5001/api/templates');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✓ 成功 (${response.status})</div>
+                                   <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">✗ 错误: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
