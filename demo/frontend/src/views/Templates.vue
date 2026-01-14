@@ -51,25 +51,33 @@
           <div
             v-for="template in templates"
             :key="template.id"
-            class="template-card card"
+            class="template-card"
+            :class="{ 'is-expanded': expandedTemplates.has(template.id) }"
           >
             <div class="template-header" @click="toggleExpand(template.id)">
               <div class="header-left">
-                <el-icon 
-                  class="expand-icon"
-                  :class="{ 'is-expanded': expandedTemplates.has(template.id) }"
-                >
-                  <ArrowRight />
-                </el-icon>
-                <h3 class="template-title">{{ template.title }}</h3>
+                <div class="icon-wrapper">
+                  <el-icon 
+                    class="expand-icon"
+                    :class="{ 'is-rotated': expandedTemplates.has(template.id) }"
+                  >
+                    <ArrowRight />
+                  </el-icon>
+                </div>
+                <div class="title-wrapper">
+                  <h3 class="template-title">{{ template.title }}</h3>
+                  <div class="template-meta" v-if="!expandedTemplates.has(template.id)">
+                    <span class="meta-tag" v-for="tag in template.tags.slice(0, 3)" :key="tag">{{ tag }}</span>
+                  </div>
+                </div>
               </div>
               <div class="template-actions">
-                <el-button size="small" type="primary" @click.stop="copyTemplate(template)">
+                <el-button link type="primary" @click.stop="copyTemplate(template)">
                   复制
                 </el-button>
                 <el-button
                   v-if="!template.isSystem"
-                  size="small"
+                  link
                   type="danger"
                   @click.stop="handleDelete(template.id)"
                 >
@@ -79,36 +87,42 @@
             </div>
             
             <el-collapse-transition>
-              <div v-show="expandedTemplates.has(template.id)">
+              <div v-show="expandedTemplates.has(template.id)" class="template-body">
                 <!-- 编辑模式 -->
                 <div v-if="editingId === template.id" class="edit-mode" @click.stop>
                   <el-input
                     v-model="editingContent"
                     type="textarea"
-                    :rows="6"
+                    :rows="12"
                     placeholder="请输入模板内容"
                     ref="editInputRef"
+                    class="edit-textarea"
                   />
                   <div class="edit-actions-bar">
-                    <el-button size="small" @click="cancelEdit">取消</el-button>
+                    <el-button @click="cancelEdit">取消</el-button>
                     <el-button 
-                      size="small" 
                       type="primary" 
                       :loading="saveLoading" 
                       @click="saveEdit(template)"
                     >
-                      确认
+                      确认保存
                     </el-button>
                   </div>
                 </div>
                 
                 <!-- 查看模式 -->
-                <pre 
+                <div 
                   v-else 
-                  class="template-content" 
-                  @dblclick.stop="startEdit(template)"
-                  title="双击可编辑内容"
-                >{{ template.content }}</pre>
+                  class="content-wrapper"
+                >
+                  <div 
+                    class="template-content" 
+                    @dblclick.stop="startEdit(template)"
+                    title="双击进入编辑模式"
+                  >
+                    {{ template.content }}
+                  </div>
+                </div>
 
                 <div class="template-footer">
                   <div class="template-tags">
@@ -116,12 +130,16 @@
                       v-for="tag in template.tags"
                       :key="tag"
                       size="small"
-                      type="info"
+                      effect="plain"
+                      round
+                      class="tag-item"
                     >
                       {{ tag }}
                     </el-tag>
                   </div>
-                  <span class="usage-count">使用次数：{{ template.usageCount }}</span>
+                  <span class="usage-count">
+                    <i class="el-icon-view"></i> {{ template.usageCount }} 次使用
+                  </span>
                 </div>
               </div>
             </el-collapse-transition>
@@ -447,38 +465,61 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .templates-page {
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  padding-bottom: 60px;
+
+  .page-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
   .sticky-header {
     position: sticky;
     top: 0;
     z-index: 100;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(5px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin: -20px -20px 20px -20px;
-    padding: 20px 20px 0 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin: 0 -20px 24px -20px;
+    padding: 20px 20px 10px 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
   }
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
 
     .section-title {
       margin-bottom: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a1a;
     }
     
     .header-actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
   }
 
   .search-section {
-    margin-bottom: 20px;
-    padding: 16px;
+    margin-bottom: 10px;
+    
+    :deep(.el-input__wrapper) {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border-radius: 8px;
+      padding: 4px 12px;
+      
+      &.is-focus {
+        box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+      }
+    }
   }
 
   .templates-list {
@@ -492,82 +533,159 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 20px;
+    gap: 12px;
+    padding: 40px;
+    background: #fff;
+    border-radius: 12px;
   }
 
   .template-card {
-    transition: all 0.3s ease;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid transparent;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+
+    &:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
+    
+    &.is-expanded {
+      border-color: rgba(0,0,0,0.05);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      transform: none; // Reset hover transform when expanded
+      
+      .template-header {
+        border-bottom: 1px solid #f0f0f0;
+        background-color: #fafafa;
+      }
+    }
 
     .template-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0; // Remove bottom margin when collapsed
-      padding: 12px 16px; // Add padding to header area
+      padding: 16px 20px;
       cursor: pointer;
-      border-radius: 4px;
+      background: #fff;
+      transition: background-color 0.2s;
       
       &:hover {
-        background-color: #f5f7fa;
+        background-color: #fcfcfc;
       }
       
       .header-left {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
         flex: 1;
         
-        .expand-icon {
-          transition: transform 0.3s ease;
-          color: #909399;
+        .icon-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #f5f7fa;
+          transition: all 0.2s;
           
-          &.is-expanded {
-            transform: rotate(90deg);
+          .expand-icon {
+            font-size: 12px;
+            color: #909399;
+            transition: transform 0.3s ease;
+            
+            &.is-rotated {
+              transform: rotate(90deg);
+            }
           }
+        }
+        
+        .title-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+
+          .template-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+          }
+          
+          .template-meta {
+            display: flex;
+            gap: 6px;
+            
+            .meta-tag {
+              font-size: 12px;
+              color: #909399;
+              background: #f5f7fa;
+              padding: 2px 6px;
+              border-radius: 4px;
+            }
+          }
+        }
+      }
+      
+      .template-actions {
+        opacity: 0.8;
+        transition: opacity 0.2s;
+        
+        &:hover {
+          opacity: 1;
         }
       }
     }
 
-    .template-title {
-      margin: 0;
-      font-size: 18px;
+    .template-body {
+      padding: 20px 24px;
     }
 
-    // Add padding wrapper for content and footer
-    .template-content, .template-footer, .edit-mode {
-      margin-left: 16px;
-      margin-right: 16px;
-    }
-    
-    .template-content {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 16px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-family: inherit;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-top: 12px;
-      margin-bottom: 16px;
-      cursor: pointer;
-      transition: background-color 0.2s;
+    .content-wrapper {
+      max-height: 65vh; // Ensure it fits within viewport
+      overflow-y: auto;
+      margin-bottom: 20px;
+      padding-right: 4px;
       
-      &:hover {
-        background: #f0f0f0;
+      // Custom Scrollbar
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #e4e7ed;
+        border-radius: 3px;
+      }
+      &::-webkit-scrollbar-track {
+        background: transparent;
       }
     }
     
+    .template-content {
+      font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #4a4a4a;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      padding: 4px 0;
+    }
+    
     .edit-mode {
-      margin-top: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      
+      .edit-textarea {
+        font-family: monospace;
+      }
       
       .edit-actions-bar {
         display: flex;
         justify-content: flex-end;
-        margin-top: 8px;
-        gap: 8px;
+        margin-top: 16px;
+        gap: 12px;
       }
     }
 
@@ -575,17 +693,26 @@ onMounted(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 16px; // Add bottom padding
+      padding-top: 16px;
+      border-top: 1px solid #f5f7fa;
 
       .template-tags {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
+        
+        .tag-item {
+          border-color: #e4e7ed;
+          color: #606266;
+        }
       }
 
       .usage-count {
-        font-size: 12px;
+        font-size: 13px;
         color: #909399;
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
     }
   }
@@ -593,12 +720,48 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .templates-page {
+    .sticky-header {
+      padding: 16px 16px 10px 16px;
+      margin: 0 -16px 20px -16px;
+    }
+    
+    .page-container {
+      padding: 0 16px;
+    }
+    
     .page-header {
       flex-direction: column;
       align-items: stretch;
+      gap: 16px;
       
       .header-actions {
         justify-content: flex-end;
+        overflow-x: auto;
+        padding-bottom: 4px; // For scrollbar if needed
+      }
+    }
+    
+    .template-card {
+      .template-header {
+        padding: 12px 16px;
+        
+        .header-left {
+          gap: 10px;
+          
+          .title-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+        }
+      }
+      
+      .template-body {
+        padding: 16px;
+      }
+      
+      .content-wrapper {
+        max-height: 50vh; // Smaller max-height on mobile
       }
     }
   }
