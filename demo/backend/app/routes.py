@@ -86,6 +86,39 @@ def delete_template(template_id):
     return jsonify({'message': '删除成功'})
 
 
+@api_bp.route('/templates/<int:template_id>', methods=['PUT'])
+def update_template(template_id):
+    """更新提示词模板"""
+    template = PromptTemplate.query.get_or_404(template_id)
+    data = request.get_json()
+
+    if 'title' in data:
+        template.title = data['title']
+    if 'content' in data:
+        template.content = data['content']
+    if 'templateType' in data:
+        template.template_type = data['templateType']
+    
+    # 处理标签更新
+    if 'tags' in data:
+        # 清除旧标签关联
+        TemplateTag.query.filter_by(template_id=template.id).delete()
+        
+        tags = data['tags']
+        for tag_name in tags:
+            tag = Tag.query.filter_by(name=tag_name).first()
+            if not tag:
+                tag = Tag(name=tag_name)
+                db.session.add(tag)
+                db.session.flush()
+            
+            template_tag = TemplateTag(template_id=template.id, tag_id=tag.id)
+            db.session.add(template_tag)
+
+    db.session.commit()
+    return jsonify(template.to_dict())
+
+
 @api_bp.route('/templates/<int:template_id>/copy', methods=['POST'])
 def copy_template(template_id):
     """复制模板（增加使用次数）"""

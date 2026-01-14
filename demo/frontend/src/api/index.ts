@@ -21,6 +21,13 @@ export const createTemplate = (data: {
 
 export const deleteTemplate = (id: number) => api.delete(`/templates/${id}`)
 
+export const updateTemplate = (id: number, data: {
+  title?: string
+  content?: string
+  templateType?: string
+  tags?: string[]
+}) => api.put(`/templates/${id}`, data)
+
 export const copyTemplate = (id: number) => api.post(`/templates/${id}/copy`)
 
 // 提示词生成接口
