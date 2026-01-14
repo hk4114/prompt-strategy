@@ -5,8 +5,10 @@
   "rewrites": [
     { "source": "/api/categories", "destination": "/api/categories" },
     { "source": "/api/templates", "destination": "/api/templates" },
+    { "source": "/api/templates/(.*)", "destination": "/api/templates" },
     { "source": "/api/prompt/generate/minimal", "destination": "/api/generate-minimal" },
     { "source": "/api/prompt/generate/complex", "destination": "/api/generate-complex" },
-    { "source": "/api/review", "destination": "/api/review" }
+    { "source": "/api/review", "destination": "/api/review" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
