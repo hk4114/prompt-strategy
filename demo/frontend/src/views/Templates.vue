@@ -208,10 +208,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, ArrowRight } from "@element-plus/icons-vue";
-import { MdEditor, MdPreview } from "md-editor-v3";
+import { MdEditor } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 import {
   getTemplates,
