@@ -98,7 +98,7 @@
                   复制
                 </el-button>
                 <el-button
-                  v-if="!template.isSystem"
+                  v-show="showButtons"
                   link
                   type="danger"
                   @click.stop="handleDelete(template.id)"
