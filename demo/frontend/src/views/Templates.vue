@@ -13,9 +13,15 @@
               accept=".md"
               @change="handleFileChange"
             />
-            <el-button v-if="showButtons" @click="triggerImport">导入模板</el-button>
+            <el-button v-if="showButtons" @click="triggerImport"
+              >导入模板</el-button
+            >
             <el-button @click="handleExport">导出模板</el-button>
-            <el-button v-if="showButtons" type="primary" @click="showAddDialog = true">
+            <el-button
+              v-if="showButtons"
+              type="primary"
+              @click="showAddDialog = true"
+            >
               添加模板
             </el-button>
           </div>
@@ -121,6 +127,7 @@
                   <div class="edit-actions-bar">
                     <el-button @click="cancelEdit">取消</el-button>
                     <el-button
+                      v-show="showButtons"
                       type="primary"
                       :loading="saveLoading"
                       @click="saveEdit(template)"
@@ -172,7 +179,7 @@
             v-if="templates.length === 0 && !loading"
             description="暂无模板"
           />
-          
+
           <div class="pagination-container" v-if="total > 0">
             <el-pagination
               v-model:current-page="currentPage"
@@ -295,15 +302,15 @@ const loadTemplates = async (keyword = "") => {
   error.value = "";
 
   try {
-    const { data } = await getTemplates({ 
+    const { data } = await getTemplates({
       keyword,
       page: currentPage.value,
-      page_size: pageSize.value
+      page_size: pageSize.value,
     });
     templates.value = data.templates;
     total.value = data.total || data.templates.length;
-    
-    expandedTemplates.value.clear(); 
+
+    expandedTemplates.value.clear();
     selectedTemplates.value.clear();
   } catch (err) {
     console.error("Failed to load templates:", err);
@@ -316,9 +323,9 @@ const loadTemplates = async (keyword = "") => {
 const handleSearch = debounce(() => {
   currentPage.value = 1;
   loadTemplates(searchKeyword.value);
-  
+
   // 如果当前搜索关键词是'takemymoney'或者已经显示过按钮，则保持按钮显示
-  if (searchKeyword.value === 'takemymoney') {
+  if (searchKeyword.value === "takemymoney") {
     showButtons.value = true;
   }
 }, 300);
@@ -782,7 +789,7 @@ onMounted(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        
+
         .tag-item {
           border-color: #e4e7ed;
           color: #606266;
