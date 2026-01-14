@@ -289,15 +289,7 @@ const toggleExpand = (id: number) => {
   }
 };
 
-const toggleSelection = (id: number) => {
-  if (selectedTemplates.value.has(id)) {
-    selectedTemplates.value.delete(id);
-  } else {
-    selectedTemplates.value.add(id);
-  }
-};
-
-const loadTemplates = async (keyword = "", useCache = false) => {
+const loadTemplates = async (keyword = "") => {
   loading.value = true;
   error.value = "";
 
@@ -392,7 +384,7 @@ const handleDelete = async (id: number) => {
 
     // 清除缓存并重新加载
     templateCache.clear();
-    loadTemplates(searchKeyword.value, false);
+    loadTemplates(searchKeyword.value);
   } catch (err) {
     if (err !== "cancel") {
       ElMessage.error("删除失败");
