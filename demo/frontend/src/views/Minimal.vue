@@ -13,7 +13,8 @@
             <el-form-item label="角色 (Persona)">
               <el-input
                 v-model="form.persona"
-                placeholder="例如：资深产品经理、10年Python开发专家"
+                placeholder="例如：SaaS 销售专家 (按 Tab 填充示例)"
+                @keydown.tab="handleTabFill('persona')"
               />
             </el-form-item>
 
@@ -22,7 +23,8 @@
                 v-model="form.context"
                 type="textarea"
                 :rows="3"
-                placeholder="必须避免的禁忌项，优先考虑的关键要素"
+                placeholder="例如：对方是中型企业 CTO... (按 Tab 填充示例)"
+                @keydown.tab="handleTabFill('context')"
               />
             </el-form-item>
 
@@ -31,7 +33,8 @@
                 v-model="form.task"
                 type="textarea"
                 :rows="3"
-                placeholder="实现的具体目标，量化标准，目标用户"
+                placeholder="例如：用 150 字内说清楚... (按 Tab 填充示例)"
+                @keydown.tab="handleTabFill('task')"
               />
             </el-form-item>
 
@@ -40,7 +43,8 @@
                 v-model="form.limit"
                 type="textarea"
                 :rows="2"
-                placeholder="最多3条，量化优先，如'100字内''3个要点'"
+                placeholder="例如：不出现&quot;行业领先&quot;... (按 Tab 填充示例)"
+                @keydown.tab="handleTabFill('limit')"
               />
             </el-form-item>
 
@@ -49,7 +53,8 @@
                 v-model="form.goal"
                 type="textarea"
                 :rows="2"
-                placeholder="期望的输出格式和风格"
+                placeholder="例如：给出 2 个版本... (按 Tab 填充示例)"
+                @keydown.tab="handleTabFill('goal')"
               />
             </el-form-item>
 
@@ -131,6 +136,20 @@ const rules = reactive<FormRules>({
     { required: true, message: '请输入目标输出', trigger: 'blur' }
   ]
 })
+
+const exampleValues = {
+  persona: 'SaaS 销售专家',
+  context: '对方是中型企业 CTO,每天收 200+ 邮件,讨厌营销话术',
+  task: '用 150 字内说清楚我们的 API 监控工具能解决他什么痛点,最终让他愿意点击 Demo 链接',
+  limit: '- 不出现"行业领先""赋能"等废话\n- 必须有 1 个具体数据支撑\n- 开头第一句必须是问题而非自我介绍',
+  goal: '给出 2 个版本:一个强调"省钱",一个强调"避免故障"'
+}
+
+const handleTabFill = (field: keyof typeof exampleValues) => {
+  if (!form[field]) {
+    form[field] = exampleValues[field]
+  }
+}
 
 const generatePrompt = async () => {
   if (!formRef.value) return

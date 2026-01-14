@@ -18,6 +18,7 @@
       <el-main class="app-main">
         <router-view />
       </el-main>
+      <FloatingBall />
     </div>
   </el-config-provider>
 </template>
@@ -25,6 +26,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import FloatingBall from './components/FloatingBall.vue'
 
 const route = useRoute()
 </script>
