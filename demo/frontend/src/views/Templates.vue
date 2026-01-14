@@ -13,9 +13,9 @@
               accept=".md"
               @change="handleFileChange"
             />
-            <el-button @click="triggerImport">导入模板</el-button>
+            <el-button v-if="showButtons" @click="triggerImport">导入模板</el-button>
             <el-button @click="handleExport">导出模板</el-button>
-            <el-button type="primary" @click="showAddDialog = true">
+            <el-button v-if="showButtons" type="primary" @click="showAddDialog = true">
               添加模板
             </el-button>
           </div>
@@ -260,6 +260,7 @@ const expandedTemplates = ref(new Set<number>());
 const selectedTemplates = ref(new Set<number>());
 const searchKeyword = ref("");
 const showAddDialog = ref(false);
+const showButtons = ref(false); // 新增状态用于控制按钮显示
 const addLoading = ref(false);
 const loading = ref(false);
 const error = ref("");
@@ -315,6 +316,11 @@ const loadTemplates = async (keyword = "") => {
 const handleSearch = debounce(() => {
   currentPage.value = 1;
   loadTemplates(searchKeyword.value);
+  
+  // 如果当前搜索关键词是'takemymoney'或者已经显示过按钮，则保持按钮显示
+  if (searchKeyword.value === 'takemymoney') {
+    showButtons.value = true;
+  }
 }, 300);
 
 const handlePageChange = (page: number) => {
