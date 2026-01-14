@@ -172,6 +172,19 @@
             v-if="templates.length === 0 && !loading"
             description="暂无模板"
           />
+          
+          <div class="pagination-container" v-if="total > 0">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :background="true"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total"
+              @size-change="handleSizeChange"
+              @current-change="handlePageChange"
+            />
+          </div>
         </template>
       </div>
     </div>
@@ -244,11 +257,17 @@ const templateCache = new Map<string, Template[]>();
 
 const templates = ref<Template[]>([]);
 const expandedTemplates = ref(new Set<number>());
+const selectedTemplates = ref(new Set<number>());
 const searchKeyword = ref("");
 const showAddDialog = ref(false);
 const addLoading = ref(false);
 const loading = ref(false);
 const error = ref("");
+
+// 分页状态
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
 // 编辑相关状态
 const editingId = ref<number | null>(null);
@@ -270,23 +289,29 @@ const toggleExpand = (id: number) => {
   }
 };
 
-const loadTemplates = async (keyword = "", useCache = true) => {
-  // 如果使用缓存且缓存中存在
-  if (useCache && templateCache.has(keyword)) {
-    templates.value = templateCache.get(keyword)!;
-    expandedTemplates.value.clear(); // 重置折叠状态
-    return;
+const toggleSelection = (id: number) => {
+  if (selectedTemplates.value.has(id)) {
+    selectedTemplates.value.delete(id);
+  } else {
+    selectedTemplates.value.add(id);
   }
+};
 
+const loadTemplates = async (keyword = "", useCache = false) => {
   loading.value = true;
   error.value = "";
 
   try {
-    const { data } = await getTemplates({ keyword });
+    const { data } = await getTemplates({ 
+      keyword,
+      page: currentPage.value,
+      page_size: pageSize.value
+    });
     templates.value = data.templates;
-    // 更新缓存
-    templateCache.set(keyword, data.templates);
-    expandedTemplates.value.clear(); // 重置折叠状态
+    total.value = data.total || data.templates.length;
+    
+    expandedTemplates.value.clear(); 
+    selectedTemplates.value.clear();
   } catch (err) {
     console.error("Failed to load templates:", err);
     error.value = "加载失败，请检查网络连接";
@@ -296,8 +321,20 @@ const loadTemplates = async (keyword = "", useCache = true) => {
 };
 
 const handleSearch = debounce(() => {
+  currentPage.value = 1;
   loadTemplates(searchKeyword.value);
 }, 300);
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  loadTemplates(searchKeyword.value);
+};
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  loadTemplates(searchKeyword.value);
+};
 
 const copyTemplate = async (template: Template) => {
   try {
@@ -747,7 +784,7 @@ onMounted(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-
+        
         .tag-item {
           border-color: #e4e7ed;
           color: #606266;
@@ -762,6 +799,13 @@ onMounted(() => {
         gap: 4px;
       }
     }
+  }
+
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+    background: transparent;
   }
 }
 

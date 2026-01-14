@@ -27,6 +27,8 @@ def get_templates():
     """获取提示词模板列表"""
     keyword = request.args.get('keyword', '')
     template_type = request.args.get('type', '')
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('page_size', 10, type=int)
 
     query = PromptTemplate.query
 
@@ -41,9 +43,15 @@ def get_templates():
     if template_type:
         query = query.filter(PromptTemplate.template_type == template_type)
 
-    templates = query.order_by(PromptTemplate.usage_count.desc()).all()
+    pagination = query.order_by(PromptTemplate.usage_count.desc()).paginate(
+        page=page, per_page=page_size, error_out=False
+    )
+    
     return jsonify({
-        'templates': [t.to_dict() for t in templates]
+        'templates': [t.to_dict() for t in pagination.items],
+        'total': pagination.total,
+        'page': page,
+        'page_size': page_size
     })
 
 

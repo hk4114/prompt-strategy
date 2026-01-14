@@ -9,7 +9,7 @@ const api = axios.create({
 export const getCategories = () => api.get('/categories')
 
 // 模板接口
-export const getTemplates = (params?: { keyword?: string; type?: string }) =>
+export const getTemplates = (params?: { keyword?: string; type?: string; page?: number; page_size?: number }) =>
   api.get('/templates', { params })
 
 export const createTemplate = (data: {

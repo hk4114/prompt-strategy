@@ -11,12 +11,32 @@ class handler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsed.query)
         keyword = query.get('keyword', [''])[0]
-        templates = [t for t in TEMPLATES if not keyword or keyword.lower() in t['title'].lower() or keyword.lower() in t['content'].lower()]
+        
+        # Pagination
+        try:
+            page = int(query.get('page', ['1'])[0])
+            page_size = int(query.get('page_size', ['10'])[0])
+        except ValueError:
+            page = 1
+            page_size = 10
+            
+        filtered_templates = [t for t in TEMPLATES if not keyword or keyword.lower() in t['title'].lower() or keyword.lower() in t['content'].lower()]
+        total = len(filtered_templates)
+        
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_templates = filtered_templates[start:end]
+        
         self.send_response(200)
         self.send_header('Content-type', 'application/json; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
-        self.wfile.write(json.dumps({"templates": templates}, ensure_ascii=False).encode('utf-8'))
+        self.wfile.write(json.dumps({
+            "templates": paginated_templates,
+            "total": total,
+            "page": page,
+            "page_size": page_size
+        }, ensure_ascii=False).encode('utf-8'))
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
