@@ -109,26 +109,27 @@ def generate_minimal_prompt():
     goal = data.get('goal', '')
     note = data.get('note', '这对我的职业生涯非常重要!')
 
-    prompt = f"""## 角色
-作为 {persona}
-
-## 背景
-{context}
-
-## 任务
-{task}
-
-## 限制
-{limit}
-
-## 输出
-1. 以 Markdown 形式输出
-2. 输出结果必须包含参考资料
-3. 输出风格犀利、凝练、有力
-4. 展示至少两种备选方案及其淘汰理由
-
----
-{note}"""
+    parts = []
+    
+    if persona:
+        parts.append(f"## 角色\n作为 {persona}")
+    
+    if context:
+        parts.append(f"## 背景\n{context}")
+        
+    if task:
+        parts.append(f"## 任务\n{task}")
+        
+    if limit:
+        parts.append(f"## 限制\n{limit}")
+        
+    if goal:
+        parts.append(f"## 输出\n{goal}")
+        
+    if note:
+        parts.append(f"---\n{note}")
+        
+    prompt = "\n\n".join(parts)
 
     # 保存使用日志
     log = PromptUsageLog(

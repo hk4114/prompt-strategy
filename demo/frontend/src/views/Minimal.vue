@@ -9,7 +9,7 @@
       <div class="content-wrapper">
         <!-- 表单区域 -->
         <div class="form-section card">
-          <el-form :model="form" label-position="top">
+          <el-form ref="formRef" :model="form" label-position="top" :rules="rules">
             <el-form-item label="角色 (Persona)">
               <el-input
                 v-model="form.persona"
@@ -44,7 +44,7 @@
               />
             </el-form-item>
 
-            <el-form-item label="目标输出 (Goal)">
+            <el-form-item label="目标输出 (Goal)" prop="goal">
               <el-input
                 v-model="form.goal"
                 type="textarea"
@@ -72,59 +72,50 @@
         <div class="result-section card">
           <div class="result-header">
             <h3>生成结果</h3>
-            <el-button
-              v-if="generatedPrompt"
-              type="primary"
-              size="small"
-              @click="copyPrompt"
-            >
-              复制
-            </el-button>
+            <div class="result-actions">
+              <el-button
+                v-if="generatedPrompt"
+                type="warning"
+                size="small"
+                @click="resetForm"
+              >
+                重置
+              </el-button>
+              <el-button
+                v-if="generatedPrompt"
+                type="primary"
+                size="small"
+                @click="copyPrompt"
+              >
+                复制
+              </el-button>
+            </div>
           </div>
           <div class="result-content">
-            <pre v-if="generatedPrompt">{{ generatedPrompt }}</pre>
+            <el-input
+              v-if="generatedPrompt"
+              v-model="generatedPrompt"
+              type="textarea"
+              :rows="20"
+              placeholder="生成结果将显示在这里，您可以直接编辑"
+            />
             <el-empty v-else description="填写表单后生成提示词" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 复盘弹窗 -->
-    <el-dialog v-model="showReview" title="复盘检查清单" width="500px">
-      <el-form :model="reviewForm" label-position="top">
-        <el-form-item label="1. 预期达到的效果？">
-          <el-input v-model="reviewForm.expectedEffect" type="textarea" :rows="2" />
-        </el-form-item>
-        <el-form-item label="2. 如何评价（验证）这次生成的结果？">
-          <el-input v-model="reviewForm.evaluationMethod" type="textarea" :rows="2" />
-        </el-form-item>
-        <el-form-item label="3. 是否有明显错误答案？你怎么处理的？">
-          <el-input v-model="reviewForm.errorHandling" type="textarea" :rows="2" />
-        </el-form-item>
-        <el-form-item label="4. 生成的内容和你的预期不符，我是如何调整优化的？">
-          <el-input v-model="reviewForm.adjustmentNotes" type="textarea" :rows="2" />
-        </el-form-item>
-        <el-form-item label="5. 我为什么这么写提示词？">
-          <el-input v-model="reviewForm.promptReasoning" type="textarea" :rows="2" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showReview = false">跳过</el-button>
-        <el-button type="primary" @click="submitReview">提交复盘</el-button>
-      </template>
-    </el-dialog>
+    <!-- 复盘弹窗 (已移除) -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
-import { generateMinimalPrompt, createReview } from '@/api'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 
 const loading = ref(false)
 const generatedPrompt = ref('')
-const currentLogId = ref<number | null>(null)
-const showReview = ref(false)
+const formRef = ref<FormInstance>()
 
 const form = reactive({
   persona: '',
@@ -135,49 +126,69 @@ const form = reactive({
   note: '这对我的职业生涯非常重要!'
 })
 
-const reviewForm = reactive({
-  expectedEffect: '',
-  evaluationMethod: '',
-  errorHandling: '',
-  adjustmentNotes: '',
-  promptReasoning: ''
+const rules = reactive<FormRules>({
+  goal: [
+    { required: true, message: '请输入目标输出', trigger: 'blur' }
+  ]
 })
 
 const generatePrompt = async () => {
-  loading.value = true
-  try {
-    const { data } = await generateMinimalPrompt(form)
-    generatedPrompt.value = data.prompt
-    currentLogId.value = data.logId
-    ElMessage.success('生成成功')
-  } catch (error) {
-    ElMessage.error('生成失败')
-  } finally {
-    loading.value = false
-  }
+  if (!formRef.value) return
+  
+  await formRef.value.validate((valid) => {
+    if (valid) {
+      const parts: string[] = []
+      
+      if (form.persona) {
+        parts.push(`## 角色\n作为 ${form.persona}`)
+      }
+      
+      if (form.context) {
+        parts.push(`## 背景\n${form.context}`)
+      }
+      
+      if (form.task) {
+        parts.push(`## 任务\n${form.task}`)
+      }
+      
+      if (form.limit) {
+        parts.push(`## 限制\n${form.limit}`)
+      }
+      
+      if (form.goal) {
+        parts.push(`## 输出\n${form.goal}`)
+      }
+      
+      if (form.note) {
+        parts.push(`---\n${form.note}`)
+      }
+      
+      generatedPrompt.value = parts.join('\n\n')
+      ElMessage.success('生成成功')
+    }
+  })
 }
 
 const copyPrompt = async () => {
   try {
     await navigator.clipboard.writeText(generatedPrompt.value)
     ElMessage.success('已复制到剪贴板')
-    showReview.value = true
   } catch (error) {
     ElMessage.error('复制失败')
   }
 }
 
-const submitReview = async () => {
-  try {
-    await createReview({
-      usageLogId: currentLogId.value ?? undefined,
-      ...reviewForm
-    })
-    ElMessage.success('复盘已保存')
-    showReview.value = false
-  } catch (error) {
-    ElMessage.error('保存失败')
-  }
+const resetForm = () => {
+  if (!formRef.value) return
+  formRef.value.resetFields()
+  generatedPrompt.value = ''
+  // 仅重置了绑定 prop 的字段（如 goal），其他字段手动清空
+  form.persona = ''
+  form.context = ''
+  form.task = ''
+  form.limit = ''
+  form.note = '这对我的职业生涯非常重要!'
+  ElMessage.success('已重制')
 }
 </script>
 
