@@ -10,6 +10,14 @@
         <!-- 表单区域 -->
         <div class="form-section card">
           <el-form ref="formRef" :model="form" label-position="top" :rules="rules">
+            <el-form-item>
+              <el-checkbox 
+                v-model="form.isCreative" 
+                label="是否为创意写作、策略建议、枚举类问答" 
+                @change="handleCreativeChange"
+              />
+            </el-form-item>
+
             <el-form-item label="角色 (Persona)">
               <el-input
                 v-model="form.persona"
@@ -128,7 +136,8 @@ const form = reactive({
   task: '',
   limit: '',
   goal: '',
-  note: '这对我的职业生涯非常重要!'
+  note: '这对我的职业生涯非常重要!',
+  isCreative: false
 })
 
 const rules = reactive<FormRules>({
@@ -148,6 +157,19 @@ const exampleValues = {
 const handleTabFill = (field: keyof typeof exampleValues) => {
   if (!form[field]) {
     form[field] = exampleValues[field]
+  }
+}
+
+const handleCreativeChange = (val: boolean | string | number) => {
+  const appendText = '生成 5 个不同的候选答案（内容尽量有风格差异），在末尾给出推荐建议。'
+  const isChecked = val === true
+  
+  if (isChecked) {
+    if (!form.goal.includes(appendText)) {
+      form.goal = form.goal ? `${form.goal}\n${appendText}` : appendText
+    }
+  } else {
+    form.goal = form.goal.replace(new RegExp(`\\n?${appendText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), '').trim()
   }
 }
 
@@ -207,6 +229,7 @@ const resetForm = () => {
   form.task = ''
   form.limit = ''
   form.note = '这对我的职业生涯非常重要!'
+  form.isCreative = false
   ElMessage.success('已重制')
 }
 </script>
