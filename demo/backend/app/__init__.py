@@ -28,7 +28,9 @@ def create_app():
         db.create_all()
         
         # 初始化默认数据
-        from app.utils.init_data import init_default_templates
+        from app.utils.init_data import init_default_templates, init_categories, init_tips
         init_default_templates(app)
+        init_categories(app)
+        init_tips(app)
 
     return app

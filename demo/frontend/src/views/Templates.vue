@@ -343,7 +343,9 @@ const handleSizeChange = (size: number) => {
 
 const copyTemplate = async (template: Template) => {
   try {
-    await navigator.clipboard.writeText(template.content);
+    // 处理 template.content 去掉标题和```
+    const content = template.content.replace(/^#+\s+/, "").replace(/```.*?```/gs, "");
+    await navigator.clipboard.writeText(content);
     ElMessage.success("已复制到剪贴板");
   } catch (err) {
     ElMessage.error("复制失败");
