@@ -344,7 +344,17 @@ const handleSizeChange = (size: number) => {
 const copyTemplate = async (template: Template) => {
   try {
     // 处理 template.content 去掉标题和```
-    const content = template.content.replace(/^#+\s+/, "").replace(/```.*?```/gs, "");
+    let content = template.content.trim();
+
+    // 去掉开头的标题 (# 标题)
+    content = content.replace(/^\s*#+\s+.*(\r?\n|$)/, "").trim();
+
+    // 去掉外层的代码块标记
+    const codeBlockMatch = content.match(/^```.*\r?\n([\s\S]*?)\r?\n```$/);
+    if (codeBlockMatch) {
+      content = codeBlockMatch[1];
+    }
+
     await navigator.clipboard.writeText(content);
     ElMessage.success("已复制到剪贴板");
   } catch (err) {
