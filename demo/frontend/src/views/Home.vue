@@ -8,9 +8,9 @@
         <el-button type="primary" size="large" @click="router.push('/minimal')">
           简单任务
         </el-button>
-        <el-button type="success" size="large" @click="router.push('/complex')">
+        <!-- <el-button type="success" size="large" @click="router.push('/complex')">
           复杂任务
-        </el-button>
+        </el-button> -->
         <el-button type="warning" size="large" @click="scrollToSection('knowledge')">
           智能体
         </el-button>
